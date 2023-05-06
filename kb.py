@@ -1,6 +1,7 @@
 #! /usr/bin/python3
 import uinput
 from inputs import get_gamepad
+import tkinter
 
 from keys import KEYS
 from config import get_config, get_modifiers
@@ -137,6 +138,55 @@ def handle_mode(event, modifiers, device):
         print(event.ev_type, event.code, event.state)
 
 
+def init_window(root):
+    root.attributes("-topmost", True)
+
+    tkinter.Label(root, text='A',
+                  borderwidth=1, name="d_north").grid(row=0, column=1)
+    tkinter.Label(root, text='B',
+                  borderwidth=1, name="d_east").grid(row=1, column=2)
+    tkinter.Label(root, text='C',
+                  borderwidth=1, name="d_south").grid(row=2, column=1)
+    tkinter.Label(root, text='D',
+                  borderwidth=1, name="d_west").grid(row=1, column=0)
+
+    tkinter.Label(root, text=' ',
+                  borderwidth=1).grid(row=0, column=3)
+    tkinter.Label(root, text=' ',
+                  borderwidth=1).grid(row=0, column=4)
+    tkinter.Label(root, text=' ',
+                  borderwidth=1).grid(row=0, column=5)
+    tkinter.Label(root, text=' ',
+                  borderwidth=1).grid(row=0, column=6)
+
+    tkinter.Label(root, text='1',
+                  borderwidth=1, name="btn_north").grid(row=0, column=10)
+    tkinter.Label(root, text='2',
+                  borderwidth=1, name="btn_east").grid(row=1, column=11)
+    tkinter.Label(root, text='3',
+                  borderwidth=1, name="btn_south").grid(row=2, column=10)
+    tkinter.Label(root, text='4',
+                  borderwidth=1, name="btn_west").grid(row=1, column=9)
+
+    root.update()
+
+
+def draw(root, config):
+    global mode
+
+    buttons = ["D_NORTH", "D_EAST", "D_SOUTH", "D_WEST",
+               "BTN_NORTH", "BTN_EAST", "BTN_SOUTH", "BTN_WEST"]
+
+    for button in buttons:
+        label = config[mode][button].replace("KEY_", "")
+        if label == "":
+            label = "[ ]"
+        root.nametowidget(button.lower()).configure(text=label)
+
+    root.update()
+    root.update_idletasks()
+
+
 def main():
     global mode
     global mode_listening
@@ -147,21 +197,29 @@ def main():
     modifiers = get_modifiers(config)
     print(modifiers)
 
+    root = tkinter.Tk()
+    init_window(root)
+
     while 1:
-        events = get_gamepad()
-        for event in events:
-            if not event.ev_type == "Sync":
-                modifier = get_key_by_value(modifiers, event.code)
-                if (modifier is not None) or ("THUMB" in event.code):
-                    if mode_listening and modifier != "mode":
-                        handle_mode(event, modifiers, device)
-                    else:
-                        handle_modifier(modifier, event.state, device)
-                elif "BTN" in event.code or "HAT" in event.code:
-                    if mode_listening:
-                        handle_mode(event, modifiers, device)
-                    else:
-                        handle_key(event, device, config)
+        try:
+            draw(root, config)
+            events = get_gamepad()
+            for event in events:
+                if not event.ev_type == "Sync":
+                    modifier = get_key_by_value(modifiers, event.code)
+                    if (modifier is not None) or ("THUMB" in event.code):
+                        if mode_listening and modifier != "mode":
+                            handle_mode(event, modifiers, device)
+                        else:
+                            handle_modifier(modifier, event.state, device)
+                    elif "BTN" in event.code or "HAT" in event.code:
+                        if mode_listening:
+                            handle_mode(event, modifiers, device)
+                        else:
+                            handle_key(event, device, config)
+        except Exception as e:
+            print(e)
+            exit()
 
 
 if __name__ == "__main__":
