@@ -108,6 +108,27 @@ def handle_key(event, device, config):
                 handle_button("D_EAST", 0, device, config)
 
 
+def key_press(device, key):
+    device.emit(key, 1)
+    device.emit(key, 0)
+
+
+def handle_mode(event, modifiers, device):
+    modifier = get_key_by_value(modifiers, event.code)
+    if modifier is None and "THUMB" not in event.code:
+        update_mode(event)
+    elif event.code == "BTN_TR2":
+        device.emit(uinput.KEY_SPACE, event.state)
+    elif event.code == "BTN_TR":
+        device.emit(uinput.KEY_BACKSPACE, event.state)
+    elif event.code == "BTN_TL2":
+        device.emit(uinput.KEY_ENTER, event.state)
+    elif event.code == "BTN_THUMBR":
+        device.emit(uinput.KEY_TAB, event.state)
+    else:
+        print(event.ev_type, event.code, event.state)
+
+
 def main():
     global mode
     global mode_listening
@@ -123,11 +144,14 @@ def main():
         for event in events:
             if not event.ev_type == "Sync":
                 modifier = get_key_by_value(modifiers, event.code)
-                if modifier is not None:
-                    handle_modifier(modifier, event.state, device)
+                if (modifier is not None) or ("THUMB" in event.code):
+                    if mode_listening and modifier != "mode":
+                        handle_mode(event, modifiers, device)
+                    else:
+                        handle_modifier(modifier, event.state, device)
                 elif "BTN" in event.code or "HAT" in event.code:
                     if mode_listening:
-                        update_mode(event)
+                        handle_mode(event, modifiers, device)
                     else:
                         handle_key(event, device, config)
 
