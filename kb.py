@@ -35,6 +35,9 @@ def handle_modifier(modifier, state, device):
         key = uinput.KEY_LEFTALT
     elif modifier == "mode":
         mode_listening = state
+        if mode_listening == 0:
+            for key in KEYS:
+                device.emit(key, 0)
         return
     else:
         return
@@ -62,6 +65,7 @@ def handle_button(code, state, device, config):
         key = getattr(uinput, config_mode[code])
         device.emit(key, state)
     except Exception as e:
+        print(code)
         print(e)
 
 
@@ -119,12 +123,16 @@ def handle_mode(event, modifiers, device):
         update_mode(event)
     elif event.code == "BTN_TR2":
         device.emit(uinput.KEY_SPACE, event.state)
+        # key_press(device, uinput.KEY_SPACE)
     elif event.code == "BTN_TR":
         device.emit(uinput.KEY_BACKSPACE, event.state)
+        # key_press(device, uinput.KEY_BACKSPACE)
     elif event.code == "BTN_TL2":
         device.emit(uinput.KEY_ENTER, event.state)
+        # key_press(device, uinput.KEY_ENTER)
     elif event.code == "BTN_THUMBR":
         device.emit(uinput.KEY_TAB, event.state)
+        # key_press(device, uinput.KEY_TAB)
     else:
         print(event.ev_type, event.code, event.state)
 
